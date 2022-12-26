@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>datasette and billboard.js demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link href="/assets/billboard.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/assets/billboard.pkgd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+
+      <div class="content mt-3">
+        <h1>datasette and billboard.js demo</h1>
+      </div>
+      <div class="card mt-3">
+        <div class="card-content">
+          <div class="content">
+            <div id="chart"></div>
+          </div>
+        </div>
+        <footer class="card-footer">
+          <a href="/?v=1" class="card-footer-item{% if v == "1" %} has-text-primary-dark{% endif %}">api + table</a>
+          <a href="/?v=2" class="card-footer-item{% if v == "2" %} has-text-primary-dark{% endif %}">api + sql</a>
+          <a href="/?v=3" class="card-footer-item{% if v == "3" %} has-text-primary-dark{% endif %}">template version</a>
+        </footer>
+      </div>
+
+      <div class="card mt-3">
+        <header class="card-header">
+          <p class="card-header-title">
+            Description
+          </p>
+        </header>
+        <div class="card-content content">
+          <ul >
+          <li>
+            api + table: use datasette api, but the mandatory primary-key "rowid" cannot be removed from the plot
+            <br/>
+            using: <tt>/demo/reports.csv?_shape=array&_col=created&_col=delta_sec&_size=100</tt>
+          </li>
+          <li>
+            api + sql: use datasette api, but with a sql statement filtering the fields <b>(working - preferred solution)</b>
+            <br/>
+            using: <tt>/demo.csv?sql=select+created%2C+delta_sec*1000+as+delta+from+reports+order+by+created+desc+limit+100</tt>
+          </li>
+          <li>
+            template: using jinja2 templating and not the datasette api <b>(working - but needs index_vars)</b>
+          </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </body>
+  <script>
+    var chart = bb.generate({
+      bindto: '#chart',
+      data: {
+      {% if v == "1" %}
+        url: '/demo/reports.csv?_shape=array&_col=created&_col=delta_sec&_size=100',
+      {% elif v == "2" %}
+        url: '/demo.csv?sql=select+created%2C+delta_sec*1000+as+delta+from+reports+order+by+created+desc+limit+100',
+      {% elif v == "3" %}
+        rows: [
+          ['created', 'delta_sec'],
+          {% for row in chart_data -%}
+          ['{{ row[0] }}', {{ row[1] }} * 1000],
+          {% endfor -%}
+        ],
+      {% endif %}
+        x: 'created',
+        names: {
+          delta_sec: "delta"
+        }
+      },
+      axis: {
+        x: {
+          type: "timeseries",
+          fit: false,
+          tick: {
+            count: 7,
+            format: "%Y-%m-%d\n%H:%M",
+            multiline: true,
+          }
+        },
+        y: {
+          label: "milliseconds",
+          tick: {
+            culling: 3,
+          }
+        },
+      },
+      zoom: {
+        enabled: true,
+        type: "drag"
+      },
+      point: {
+        focus: {
+          only: true
+        }
+      },
+    });
+
+</Script>
+</html>

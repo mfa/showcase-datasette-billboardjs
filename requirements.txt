@@ -1,0 +1,2 @@
+datasette==0.63.2
+sqlite-utils==3.30
